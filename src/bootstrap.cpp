@@ -12,7 +12,7 @@
 #include <ESP8266WebServer.h>
 #include <WiFiManager.h>
 
-static ESP8266WebServer server(8080);
+static ESP8266WebServer server(80);
 
 static const char PAGE[] PROGMEM = R"rawliteral(
 <html><head><meta name='viewport' content='width=device-width,initial-scale=1'>
@@ -22,14 +22,14 @@ h2{color:#fff}
 p{color:#aaa}
 .btn{background:#5865F2;color:#fff;border:none;padding:10px 20px;border-radius:4px;cursor:pointer;margin:8px}
 </style></head><body>
-<h2>CalendarDisplay Bootstrap</h2>
+<h2>ImageDisplay Bootstrap</h2>
 <p>Upload the full firmware below.</p>
 <form method='POST' action='/update' enctype='multipart/form-data'>
 <input type='file' name='firmware' accept='.bin'><br><br>
 <input type='submit' value='Upload Firmware' class='btn'>
 </form>
 <p style='margin-top:40px;font-size:12px;color:#666'>
-IP: <script>document.write(location.hostname)</script> | Port: 8080
+IP: <script>document.write(location.hostname)</script> | Port: 80
 </p>
 </body></html>
 )rawliteral";
@@ -42,7 +42,7 @@ void setup() {
     wm.setConnectTimeout(30);
     wm.setConfigPortalTimeout(180);
 
-    if (!wm.autoConnect("CalendarDisplay")) {
+    if (!wm.autoConnect("ImageDisplay")) {
         Serial.println("[bootstrap] WiFi failed - restarting");
         ESP.restart();
     }
@@ -82,7 +82,7 @@ void setup() {
     });
 
     server.begin();
-    Serial.println("[bootstrap] OTA ready on port 8080");
+    Serial.println("[bootstrap] OTA ready on port 80");
 }
 
 void loop() {
