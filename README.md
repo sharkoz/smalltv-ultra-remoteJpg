@@ -11,6 +11,8 @@ Custom firmware for the GeekMagic SmallTV-Ultra that fetches a remote JPEG and d
 - Web-based device manager (image URL, refresh interval, theme, brightness, OTA)
 - WiFiManager captive portal for initial WiFi setup
 
+Tip : use for example this project to generate a useful dashboard : https://github.com/sharkoz/claude-meter
+
 ## Hardware
 
 - GeekMagic SmallTV-Ultra (ESP8266 + ST7789 240x240 IPS)
