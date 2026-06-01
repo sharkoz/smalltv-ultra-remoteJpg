@@ -40,8 +40,8 @@ select{width:100%;background:#333;color:#fff;border:1px solid #555;padding:8px;b
 <h3>Settings</h3>
 <label>Image URL (JPEG)</label>
 <input type='text' id='url' placeholder='http://example.com/image.jpg'>
-<label>Refresh interval (seconds, 30-3600)</label>
-<input type='number' id='refresh' min='30' max='3600'>
+<label>Refresh interval (seconds, 1-3600)</label>
+<input type='number' id='refresh' min='1' max='3600'>
 <br><br>
 <button class='btn' onclick='saveSettings()'>Save Settings</button>
 <span id='ss' style='color:#5b5;font-size:14px'></span>

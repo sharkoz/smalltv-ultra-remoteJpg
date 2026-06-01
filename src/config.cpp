@@ -98,5 +98,5 @@ int getRefreshInterval() {
 }
 
 void setRefreshInterval(int seconds) {
-    refreshInterval = constrain(seconds, 30, 3600);
+    refreshInterval = constrain(seconds, 1, 3600);
 }
