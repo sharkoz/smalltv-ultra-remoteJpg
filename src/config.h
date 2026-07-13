@@ -13,3 +13,4 @@ void setTheme(int theme);
 int getRefreshInterval();
 void setRefreshInterval(int seconds);
 void saveConfig();
+String getWiFiIP();
