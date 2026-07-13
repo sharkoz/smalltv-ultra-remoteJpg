@@ -118,3 +118,43 @@ void displayShowSetup() {
     tft.setTextDatum(TC_DATUM);
     tft.drawString("JPEG, 240x240 recommended", SCREEN_W / 2, 220, 2);
 }
+
+void displayShowIP(const String& ip) {
+    applyTheme(getTheme());
+    tft.fillScreen(colBg);
+    tft.setTextColor(TFT_GREEN, colBg);
+    tft.setTextDatum(MC_DATUM);
+    tft.drawString("WiFi Connected!", SCREEN_W / 2, SCREEN_W / 2 - 40, 4);
+    
+    tft.setTextColor(colText, colBg);
+    tft.drawString("IP:", SCREEN_W / 2, SCREEN_W / 2 + 10, 2);
+    tft.drawString(ip, SCREEN_W / 2, SCREEN_W / 2 + 30, 2);
+    
+    tft.setTextColor(colSubtext, colBg);
+    tft.setTextDatum(BC_DATUM);
+    tft.drawString("Loading image...", SCREEN_W / 2, 235, 2);
+}
+
+void displayShowError(const String& errorMsg) {
+    applyTheme(getTheme());
+    tft.fillScreen(colBg);
+    tft.setTextColor(TFT_RED, colBg);
+    tft.setTextDatum(TC_DATUM);
+    tft.drawString("Error", SCREEN_W / 2, 20, 4);
+    
+    tft.setTextColor(colText, colBg);
+    tft.setTextDatum(TL_DATUM);
+    
+    // Wrap text on multiple lines
+    int y = 80;
+    int lineLen = 30;
+    for (int i = 0; i < errorMsg.length(); i += lineLen) {
+        String line = errorMsg.substring(i, min(i + lineLen, (int)errorMsg.length()));
+        tft.drawString(line, 10, y, 2);
+        y += 20;
+    }
+}
+
+void displayClear() {
+    tft.fillScreen(colBg);
+}
