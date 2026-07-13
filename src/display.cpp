@@ -145,11 +145,13 @@ void displayShowError(const String& errorMsg) {
     tft.setTextColor(colText, colBg);
     tft.setTextDatum(TL_DATUM);
     
-    // Wrap text on multiple lines
+    // Wrap text on multiple lines - safely handle string length
     int y = 80;
     int lineLen = 30;
-    for (int i = 0; i < errorMsg.length(); i += lineLen) {
-        String line = errorMsg.substring(i, min(i + lineLen, (int)errorMsg.length()));
+    size_t msgLen = errorMsg.length();
+    for (size_t i = 0; i < msgLen; i += lineLen) {
+        size_t endPos = (i + lineLen < msgLen) ? i + lineLen : msgLen;
+        String line = errorMsg.substring(i, endPos);
         tft.drawString(line, 10, y, 2);
         y += 20;
     }
