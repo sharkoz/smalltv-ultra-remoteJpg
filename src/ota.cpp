@@ -30,7 +30,7 @@ void logInfo(const String& msg) {
 
 String getLastLogs() {
     JsonDocument doc;
-    JsonArray logsArray = doc.createNestedArray("logs");
+    JsonArray logsArray = doc["logs"].to<JsonArray>();
     
     for (int i = 0; i < MAX_LOGS; i++) {
         if (logs[i].length() > 0) {
