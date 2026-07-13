@@ -9,6 +9,40 @@
 
 static ESP8266WebServer otaServer(80);
 
+// Logging system: circular buffer (max 10 logs)
+static const int MAX_LOGS = 10;
+static String logs[MAX_LOGS];
+static int logIndex = 0;
+
+void logError(const String& msg) {
+    String timestamp = "[ERROR] ";
+    logs[logIndex] = timestamp + msg;
+    logIndex = (logIndex + 1) % MAX_LOGS;
+    Serial.println("[ERROR] " + msg);
+}
+
+void logInfo(const String& msg) {
+    String timestamp = "[INFO] ";
+    logs[logIndex] = timestamp + msg;
+    logIndex = (logIndex + 1) % MAX_LOGS;
+    Serial.println("[INFO] " + msg);
+}
+
+String getLastLogs() {
+    JsonDocument doc;
+    JsonArray logsArray = doc.createNestedArray("logs");
+    
+    for (int i = 0; i < MAX_LOGS; i++) {
+        if (logs[i].length() > 0) {
+            logsArray.add(logs[i]);
+        }
+    }
+    
+    String json;
+    serializeJson(doc, json);
+    return json;
+}
+
 static const char OTA_PAGE[] PROGMEM = R"rawliteral(
 <html><head><meta name='viewport' content='width=device-width,initial-scale=1'>
 <style>
@@ -23,6 +57,9 @@ label{display:block;margin-top:10px;color:#ccc;font-size:14px}
 .small{font-size:12px;color:#888}
 hr{border:none;border-top:1px solid #444;margin:20px 0}
 #fl a{color:#88f}
+#logs{background:#1a1a1a;border:1px solid #444;border-radius:4px;padding:8px;max-height:200px;overflow-y:auto;font-family:monospace;font-size:12px;line-height:1.4}
+.log-error{color:#f44}
+.log-info{color:#4f4}
 select{width:100%;background:#333;color:#fff;border:1px solid #555;padding:8px;border-radius:4px}
 </style></head><body>
 <h2>ImageDisplay</h2>
@@ -50,6 +87,9 @@ select{width:100%;background:#333;color:#fff;border:1px solid #555;padding:8px;b
 <h3>WiFi</h3>
 <div id='wifi'>Connected</div>
 <button class='btn btn-red' onclick="if(confirm('Reset WiFi and reboot?'))fetch('/resetwifi')">Reset WiFi</button>
+
+<h3>Logs</h3>
+<div id='logs'>Loading logs...</div>
 
 <h3>Firmware Update</h3>
 <form method='POST' action='/update' enctype='multipart/form-data'>
@@ -87,6 +127,22 @@ function saveSettings(){
     if(r.ok){s.textContent='Saved!';s.style.color='#5b5'}else{s.textContent='Error!';s.style.color='#d33'}
     setTimeout(function(){s.textContent=''},2000)});
 }
+function updateLogs(){
+  fetch('/api/logs').then(r=>r.json()).then(data=>{
+    var html='';
+    if(data.logs&&data.logs.length>0){
+      data.logs.forEach(log=>{
+        var cls=log.includes('[ERROR]')?'log-error':'log-info';
+        html+='<div class="'+cls+'">'+log+'</div>';
+      });
+    }else{
+      html='No logs yet';
+    }
+    document.getElementById('logs').innerHTML=html;
+  });
+}
+updateLogs();
+setInterval(updateLogs,1000);
 fetch('/files').then(r=>r.text()).then(t=>document.getElementById('fl').innerHTML=t);
 </script>
 </body></html>
@@ -112,6 +168,10 @@ void otaInit() {
         String json;
         serializeJson(doc, json);
         otaServer.send(200, "application/json", json);
+    });
+
+    otaServer.on("/api/logs", HTTP_GET, []() {
+        otaServer.send(200, "application/json", getLastLogs());
     });
 
     otaServer.on("/api/config", HTTP_POST, []() {
@@ -217,7 +277,7 @@ void otaInit() {
     });
 
     otaServer.begin();
-    Serial.printf("OTA ready on port 80\n");
+    logInfo("OTA ready on port 80");
 }
 
 void otaHandle() {
