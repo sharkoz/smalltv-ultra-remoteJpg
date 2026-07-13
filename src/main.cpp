@@ -8,34 +8,34 @@ static unsigned long lastImageFetch = 0;
 
 void setup() {
     Serial.begin(115200);
-    Serial.println("\n[main] starting");
+    logInfo("Starting...");
 
     displayInit();
     displayShowConnecting();
 
     configInit();
-    Serial.println("[main] WiFi connected");
+    logInfo("WiFi connected");
 
     // Show IP for 3 seconds
     String ip = getWiFiIP();
-    Serial.printf("[main] IP: %s\n", ip.c_str());
+    logInfo("IP: " + ip);
     displayShowIP(ip);
     delay(3000);
 
     displaySetBrightness(getBrightness());
     imageInit();
     otaInit();
-    Serial.println("[main] OTA ready");
+    logInfo("Setup complete");
 
     if (!isConfigured()) {
-        Serial.println("[main] no image URL configured");
+        logInfo("No image URL configured");
         displayShowSetup();
         return;
     }
 
     // Try to fetch the initial image
     if (!imageFetch(getImageUrl())) {
-        Serial.println("[main] initial image fetch failed");
+        logError("Initial image fetch failed");
         displayShowError("Failed to load image\nCheck URL");
         delay(3000);
     }
@@ -53,7 +53,7 @@ void loop() {
     if (now - lastImageFetch >= interval) {
         lastImageFetch = now;
         if (!imageFetch(getImageUrl())) {
-            Serial.println("[main] image fetch failed");
+            logError("Image refresh failed");
             displayShowError("Failed to refresh\nimage");
             delay(3000);
         }
