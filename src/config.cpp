@@ -55,6 +55,8 @@ void configInit() {
 
     if (!wm.autoConnect("ImageDisplay")) {
         Serial.println("[config] WiFi failed - restarting");
+        displayShowError("WiFi connection failed");
+        delay(3000);
         ESP.restart();
     }
 
@@ -99,4 +101,8 @@ int getRefreshInterval() {
 
 void setRefreshInterval(int seconds) {
     refreshInterval = constrain(seconds, 1, 3600);
+}
+
+String getWiFiIP() {
+    return WiFi.localIP().toString();
 }
