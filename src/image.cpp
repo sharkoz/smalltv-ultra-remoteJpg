@@ -1,5 +1,6 @@
 #include "image.h"
 #include "display.h"
+#include "ota.h"
 
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
@@ -32,12 +33,12 @@ void imageInit() {
 
 bool imageFetch(const String& url) {
     if (url.isEmpty()) {
-        Serial.println("[image] URL is empty");
+        logError("URL is empty");
         displayShowError("No URL configured");
         return false;
     }
 
-    Serial.printf("[image] Fetching: %s\n", url.c_str());
+    logInfo("Fetching: " + url);
 
     // Pick the transport from the URL scheme: plain TCP for http://,
     // TLS (insecure - no cert check) for https://. Both clients are stack
@@ -56,7 +57,7 @@ bool imageFetch(const String& url) {
     http.setTimeout(15000);
 
     if (!http.begin(*client, url)) {
-        Serial.println("[image] http.begin() failed - invalid URL or connection issue");
+        logError("http.begin() failed - invalid URL");
         displayShowError("Invalid URL or\nconnection failed");
         return false;
     }
@@ -69,17 +70,17 @@ bool imageFetch(const String& url) {
     if (lastEtag.length() > 0)     http.addHeader("If-None-Match", lastEtag);
     if (lastModified.length() > 0) http.addHeader("If-Modified-Since", lastModified);
 
-    Serial.println("[image] sending GET request...");
+    logInfo("Sending GET request...");
     int code = http.GET();
-    Serial.printf("[image] HTTP response code: %d\n", code);
+    logInfo("HTTP response: " + String(code));
 
     if (code == HTTP_CODE_NOT_MODIFIED) {
-        Serial.println("[image] 304 Not Modified - skipping");
+        logInfo("304 Not Modified - skipping");
         http.end();
         return true; // image already on screen, nothing to do
     }
     if (code != HTTP_CODE_OK) {
-        Serial.printf("[image] HTTP error %d\n", code);
+        logError("HTTP error " + String(code));
         String errorMsg = "HTTP Error: ";
         errorMsg += String(code);
         displayShowError(errorMsg);
@@ -92,7 +93,7 @@ bool imageFetch(const String& url) {
 
     File f = LittleFS.open(TMP_PATH, "w");
     if (!f) {
-        Serial.println("[image] LittleFS open failed");
+        logError("LittleFS open failed");
         displayShowError("Storage error");
         http.end();
         return false;
@@ -100,7 +101,7 @@ bool imageFetch(const String& url) {
 
     WiFiClient* stream = http.getStreamPtr();
     if (!stream) {
-        Serial.println("[image] stream is null");
+        logError("Stream is null");
         displayShowError("No data stream");
         f.close();
         http.end();
@@ -113,7 +114,7 @@ bool imageFetch(const String& url) {
     unsigned long lastData = millis();
     unsigned long startTime = millis();
 
-    Serial.println("[image] downloading data...");
+    logInfo("Downloading data...");
     while (stream->connected() || stream->available()) {
         size_t avail = stream->available();
         if (avail > 0) {
@@ -123,19 +124,19 @@ bool imageFetch(const String& url) {
             total += n;
             lastData = millis();
             if (total >= MAX_JPEG_BYTES) {
-                Serial.printf("[image] size cap reached (%u bytes)\n", total);
+                logInfo("Size cap reached (" + String(total) + " bytes)");
                 break;
             }
         } else {
             if (millis() - lastData > 3000) {
-                Serial.println("[image] timeout waiting for data");
+                logInfo("Timeout waiting for data");
                 break;
             }
             delay(1);
         }
         // Safety timeout: 30 seconds max per download
         if (millis() - startTime > 30000) {
-            Serial.println("[image] total download timeout");
+            logError("Total download timeout");
             break;
         }
     }
@@ -143,26 +144,26 @@ bool imageFetch(const String& url) {
     http.end();
 
     if (total == 0) {
-        Serial.println("[image] empty response - no bytes received");
+        logError("Empty response - no bytes received");
         displayShowError("Empty response\nfrom server");
         return false;
     }
 
-    Serial.printf("[image] %u bytes downloaded in %u ms\n", total, millis() - startTime);
+    logInfo("Downloaded " + String(total) + " bytes in " + String(millis() - startTime) + "ms");
 
     // Server sent a 200 but the bytes are identical to last time (no validators
     // or unchanged content): refresh validators but skip decode + redraw.
     if (haveHash && hash == lastHash) {
-        Serial.println("[image] content hash unchanged - skipping redraw");
+        logInfo("Content hash unchanged - skipping redraw");
         lastEtag     = newEtag;
         lastModified = newModified;
         return true;
     }
 
-    Serial.println("[image] decoding JPEG...");
+    logInfo("Decoding JPEG...");
     JRESULT res = TJpgDec.drawFsJpg(0, 0, TMP_PATH, LittleFS);
     if (res != JDR_OK) {
-        Serial.printf("[image] JPEG decode error %d\n", res);
+        logError("JPEG decode error " + String(res));
         String errorMsg = "JPEG decode error: ";
         errorMsg += String(res);
         displayShowError(errorMsg);
@@ -175,6 +176,6 @@ bool imageFetch(const String& url) {
     lastEtag     = newEtag;
     lastModified = newModified;
 
-    Serial.println("[image] success!");
+    logInfo("Success!");
     return true;
 }
